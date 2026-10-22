@@ -340,7 +340,7 @@ def dvol(d):
 def describe(e):
     """Error text plus the wiivol.py line it came from, to make bug reports useful."""
     import traceback
-    lines = [f for f in traceback.extract_tb(e.__traceback__) if f.filename.endswith('wiivol.py')]
+    lines = [f for f in traceback.extract_tb(e.__traceback__) if f.filename.endswith(('wiivol.py', 'volpack.py'))]
     where = ' (line %d, %s)' % (lines[-1].lineno, lines[-1].name) if lines else ''
     return '%s: %s%s' % (type(e).__name__, e, where)
 
@@ -442,7 +442,17 @@ def write_status(base, vol, failed):
     import json
     info = os.stat(vol)
     with open(os.path.join(base, STATUS_FILE), 'w', encoding='utf-8') as f:
-        json.dump({'vol_size': info.st_size, 'vol_mtime': int(info.st_mtime), 'failed': sorted(failed)}, f, indent=1)
+        json.dump({'vol_size': info.st_size, 'vol_mtime': int(info.st_mtime), 'vol_path': os.path.abspath(vol),
+                   'failed': sorted(failed)}, f, indent=1)
+
+def read_status_any(base):
+    """The saved status of an output folder, whatever .vol it came from (volpack.py uses it to find the .vol)."""
+    import json
+    try:
+        with open(os.path.join(base, STATUS_FILE), encoding='utf-8') as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return None
 
 def extract_vol(vol, base, force=False):
     """Extract one .vol. Skips it if a previous run finished it, and only retries files that failed last time."""
