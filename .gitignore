@@ -1,0 +1,4 @@
+# output and game files: never commit these
+*_extracted/
+*.vol
+__pycache__/
